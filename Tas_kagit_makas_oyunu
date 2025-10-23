@@ -1,0 +1,75 @@
+// C kullanarak tas kagıt makas oyunu 
+ 
+ #include <math.h>
+ #include <stdio.h>
+ # include <stdlib.h>
+ #include <time.h>
+ 
+ int game(char you, char computer){
+ 	if(you == 'T' && computer == 'K' ){
+ 		return 0;
+	 }
+	 else if(you == 'K' && computer == 'T'){
+	 	return 1;
+	 }
+	 else if(you == 'T' && computer == 'M'){
+	 	return 1;
+	 }
+	 else if (you == 'M' && computer == 'T'){
+	 	return 0;
+	 }
+ 	else if(you == 'K' && computer =='M'){
+ 		return 0;
+	 }
+	 else if(you == 'M' && computer == 'K'){
+	 	return 1;
+	 }
+	 else{
+	 	return -1;
+	 }
+ }
+ 
+ // driver cod
+ int main()
+ {
+ 	int n, result;
+ 	char you,computer;
+ 	
+ 	srand(time(NULL));
+ 	n=rand() %100;
+ 	
+ 	printf("%d", n);
+ 	
+ 	if( n < 33){ 	
+ 			computer ='T';
+ 	
+ 	}
+ 	else if (n >= 33 && n < 66){
+ 				computer='K';
+	}
+		 
+    else {
+		 		computer='M';
+	} 
+		 
+	 printf("\n\n\n\n\n\n\n\n\n\n\t\t\t\t   Tas Kagit Makas Oyunu\n\n\n\n\n\n\n\n\n\n\n");
+	 printf("\t\t\tTas icin T kagit icin K makas icin M Giriniz:\n\n ");
+	 
+	 scanf("%c", &you);
+	 
+	 result=game(you, computer);
+	 // 1ise ben kazandim 0 ise bilgisayar kazandi eger -1 ise berabere bitsin
+	if(result == -1){
+		printf("\n\n\t\t\tBerabere! Kimse kazanmadi!\n");
+	}
+	else if(result == 1){
+		printf("\n\n\t\t\tBravo! Oyunu kazandin!\n");
+	}
+	else{
+		printf("\n\n\t\t\tMaalesef oyunu kaybettin!\n");
+	}
+	printf("\t\t\t\tSenin secimin: %c Bilgisayarin secimi: %c", you, computer);
+ 	
+ 	return 0;
+ 	
+ }
