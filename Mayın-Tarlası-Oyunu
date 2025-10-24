@@ -1,0 +1,321 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#define TABLESIZE 8 // Tarlanin kaca kac matris oldugu 
+#define NORMAL 7 // MAYIN SAYISI
+#define WON 1
+#define LOST -1 // KAYBEDINCE DONEN DEGER
+#define CONTINUE 0 // DEVAM
+
+//variable global
+int subtab[TABLESIZE+2][TABLESIZE+2];
+char tab[TABLESIZE+2][TABLESIZE+2];
+int nb_mine, y=0;
+int d_count=0;
+
+
+
+void create_subtable(); // alt tablo olustur
+void initialize_table(); // tabloyu inisialize eder
+void display_subtable(); // alt tablo bastir
+void display_table(); // tabloyu bastir
+void place_mines(); // mayinlari yerlestir
+int checkmatchwon(); // kazanip kazanmama kontrolu 
+void explorer();
+void explorer(int line, int column);
+int dig (int line, int column); // mayin tarlasinin icindeki istenilen koordinati acma 
+
+int main(void)
+{
+	char action; //hangi harf
+	int line,column;
+	int ilerleme;
+	int yeniden;
+	printf("Mayin Tarlasi oyunumuza hos geldiniz\n");
+	create_subtable();
+	initialize_table();
+
+	do 
+	{
+		display_table();
+		printf("\n");
+		printf("Lutfen su formatta giriniz: c,line,column veya d,line,column veya e,line,column\n");
+		scanf("%c,%d,%d",&action,&line,&column);
+		printf("\n");
+		
+		
+		if(action=='c')
+		{
+			ilerleme=dig(line,column);
+		}
+		else if(action== 'd')
+		{
+			if (nb_mine >d_count)
+			{
+				d_count++;
+				tab[line][column] = 'D';
+				ilerleme= checkmatchwon ();
+			}
+		}
+		else if(action == 'e')
+		{
+			if(d_count > 0)
+			{
+				d_count--;
+			}
+			tab[line][column] == '#';
+			ilerleme=dig(line,column);
+		}
+		
+		
+		if(ilerleme == LOST)
+		{
+			printf("Arkadasim oyunu kaybettin\n");
+			display_subtable();
+			printf("Yeniden oynamak ister misin? [1-evet][0-hayir]\n");
+			scanf("%d", &yeniden);
+			switch(yeniden)
+			{
+				case 0:printf("Tesekkurler gorusuruz\n");
+					return 0;
+					break;
+				case 1:
+					d_count=0;
+					ilerleme=CONTINUE;
+					create_subtable();
+					initialize_table();
+					break;
+					default:printf("Yanlis bir deger girdiniz\n");
+					break;
+					
+			}
+			
+			
+		}
+		
+		if(ilerleme == WON)
+		{
+			printf("Bravo harika bir is cikardin!\n");
+			display_subtable();
+			printf("Yeniden oynamak ister misin? [1-evet][0-hayir]\n");
+			scanf("%d", &yeniden);
+			switch(yeniden)
+			{
+				case 0:printf("Tesekkurler gorusuruz\n");
+					return 0;
+					break;
+				case 1:
+					d_count=0;
+					ilerleme=CONTINUE;
+					create_subtable();
+					initialize_table();
+					break;
+					default:printf("Yanlis bir deger girdiniz\n");
+					break;
+					
+			}
+		}
+		
+		
+	}while(1);
+	return 0;
+
+}
+
+void create_subtable()
+{
+	int i,j,nb_mine;
+	
+	for( i=0; i<=TABLESIZE+1; i++)
+	{
+		for(j=0;j<=TABLESIZE+1; j++)
+		{
+			subtab[i][j]=0;
+		}
+		
+	}
+	for(i=0; i<=TABLESIZE+1;i++)
+	{
+		subtab[i][0]=1;
+		subtab[i][TABLESIZE+1]=1;
+		
+	}
+	for(j=0;j<=TABLESIZE;j++)
+	{
+		subtab[0][j]=1;
+		subtab[TABLESIZE+1][j]=1;
+		
+	}
+	nb_mine=NORMAL;
+	place_mines();
+	
+}
+
+void initialize_table()
+{
+		int i,j;
+	
+	for( i=0; i<=TABLESIZE+1; i++)
+	{
+		for(j=0;j<=TABLESIZE+1; j++)
+		{
+			tab[i][j]='#';
+		}
+		
+	}
+	for(i=0; i<=TABLESIZE+1;i++)
+	{
+		tab[i][0]='*';
+		tab[i][TABLESIZE+1]='*';
+		
+	}
+	for(j=0;j<=TABLESIZE;j++)
+	{
+		tab[0][j]='*';
+		tab[TABLESIZE+1][j]='*';
+		
+	}
+}
+
+void display_table()
+{
+	int i,j;
+	printf("\n");
+	
+	for(i=1; i<=TABLESIZE;i++)
+	{
+		printf("%3d",i);
+		
+	}
+	printf("\n");
+	
+	for(i=1;i<=TABLESIZE;i++)
+	{
+		for(j=1;j<=TABLESIZE;j++)
+		{
+			printf("%3c",tab[i][j]);
+		}
+		printf("  |%d",i);
+		printf("\n");
+		
+	}
+	for(i=1;i<=TABLESIZE;i++)
+		printf("---");
+}
+
+
+void place_mines()
+{
+	srand(time(NULL));
+	nb_mine=NORMAL;
+	int i,j,k,p,line,column;
+	
+	for(i=1;i<=nb_mine;i++)
+	{
+		line=1+rand()%TABLESIZE;
+		column=1+rand()%TABLESIZE;
+		if(subtab[line][column] == -1)
+			i--;
+		subtab[line][column]=-1;
+		for(k=-1;k<=1;k++)
+		{
+			for(p=-1;p<=1;p++)
+			{
+				if(subtab[i][j]==-1)
+				{
+					if(subtab[line+k][column+p]!=-1)
+					{
+						subtab[line+k][column+p]++;
+					}
+				}
+			}
+		}
+		
+		
+	}
+}
+
+int dig(int line, int column)
+{
+	int x=0;
+		if(subtab[line][column] == -1)
+		{
+			x=LOST;
+		}
+		else if(subtab[line][column] >0)
+		{
+			tab[line][column]=('0'+subtab[line][column]); //ac
+			x=checkmatchwon();
+			x=CONTINUE;
+			
+		}
+		else 
+		{
+			explorer(line, column);
+		}
+	
+	return x;
+}
+
+void explorer(int line, int column)
+{
+	int i,j;
+	
+	for(i=-1;i<=1;i++)
+	{
+		for(j=-1;j<=1;j++)
+		{
+			
+			if(subtab[line+i][column+i] >0 && tab [line+i][column+j]=='#')
+			{
+				tab[line+i][column+j]='0'+subtab[line+i][column+i];
+			}
+			else if(subtab[line+i][column+j]==0 && tab[line+i][column+j] == '#')
+			{
+				explorer(line+i, column+j);
+				
+			}
+		}
+	}
+	
+	
+	
+	
+	
+	
+}
+
+
+int checkmatchwon()
+{
+	int i,j;
+	int status;
+	
+	for(i=1;i<=TABLESIZE;i++)
+	{
+		for(j=1;j<=TABLESIZE;j++)
+		{
+			if(tab[i][j] == 'D')
+			{
+				if (subtab[i][j] == -1)
+				{
+					y++;	
+				}
+			}
+		}
+	}
+	
+	if (y == NORMAL)
+	{
+		status=WON;
+	}
+	else
+	{
+		status=CONTINUE;
+	}
+	
+	return status;
+	
+}
