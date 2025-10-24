@@ -1,0 +1,105 @@
+import cv2
+import tkinter as tk
+from tkinter import filedialog
+from PIL import Image, ImageTk
+import os
+import sys # Programdan çıkış yapmak için eklendi
+
+# --- Gerekli Dosya Kontrolü ve Yükleme ---
+# NOT: Bu dosyanın (face_detector.xml) uygulamanın çalıştığı dizinde olması gerekir.
+FACE_CASCADE_PATH = 'face_detector.xml'
+cascade_path_used = FACE_CASCADE_PATH
+
+if not os.path.exists(FACE_CASCADE_PATH):
+    # Varsayılan OpenCV yolunu dene
+    cascade_path_used = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+    print(f"UYARI: '{FACE_CASCADE_PATH}' bulunamadi. Varsayilan OpenCV dosyasini deniyorum: {os.path.basename(cascade_path_used)}")
+    
+# Cascade Sınıflandırıcısını Yükle
+face_cascade = cv2.CascadeClassifier(cascade_path_used)
+
+# KRİTİK KONTROL: Eğer sınıflandırıcı yüklenemediyse programı durdur.
+if face_cascade.empty():
+    print("-" * 50)
+    print("FATAL HATA: Yüz algilama modeli (Cascade Classifier) yuklenemedi.")
+    print(f"Lutfen '{FACE_CASCADE_PATH}' dosyasinin VEYA '{os.path.basename(cascade_path_used)}' dosyasinin")
+    print("dogru yolda (ayni klasorde) oldugundan emin olun.")
+    print("PROGRAM SONLANDIRILIYOR. Arayuz baslamayacaktir.")
+    print("-" * 50)
+    sys.exit(1) # Hata koduyla çıkış yap
+else:
+    print("-" * 50)
+    print(f"✓ Basarili: Yüz algilama modeli '{os.path.basename(cascade_path_used)}' yuklendi.")
+    print("✓ Hazirlik Tamamlandi. Tkinter Arayuzu Simdi Acilmalidir.")
+    print("-" * 50)
+
+
+def open_file():
+    """Kullanıcıdan bir resim dosyası seçmesini ister, yüzleri algılar ve sonuçları arayüzde gösterir."""
+    file_path = filedialog.askopenfilename(
+        title="Görüntü Seç",
+        filetypes=(("Tüm Resim Dosyaları", "*.jpg *.jpeg *.png"), ("JPEG dosyaları", "*.jpg"))
+    )
+    if file_path:
+        img = cv2.imread(file_path)
+
+        if img is None:
+            print("Hata: Görüntü yüklenemedi. Lütfen dosya yolunu kontrol edin.")
+            return
+
+        # Yüz Algılama İşlemi
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        faces = face_cascade.detectMultiScale(
+            gray, 
+            scaleFactor=1.05, 
+            minNeighbors=5, 
+            minSize=(30, 30)
+        )
+
+        # Algılanan yüzleri işaretleme
+        for (x, y, w, h) in faces:
+            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            cv2.putText(
+                img, 
+                "Insan", 
+                (x, y - 10),
+                cv2.FONT_HERSHEY_SIMPLEX, 
+                0.7, 
+                (255, 0, 0), 
+                2
+            )
+
+        # OpenCV'nin BGR formatını PIL ve Tkinter için RGB formatına dönüştürme
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        img_pil = Image.fromarray(img_rgb)
+        
+        # Görüntüyü canvas'a sığacak şekilde yeniden boyutlandırma
+        canvas_width = canvas.winfo_width()
+        canvas_height = canvas.winfo_height()
+        
+        # Yeniden boyutlandırma sadece resim canvas'tan büyükse yapılır
+        if img_pil.width > canvas_width or img_pil.height > canvas_height:
+             img_pil.thumbnail((canvas_width, canvas_height))
+
+
+        img_tk = ImageTk.PhotoImage(img_pil)
+
+        # Görüntüyü canvas'a yerleştirme
+        canvas.delete("all")
+        canvas.config(width=img_pil.width, height=img_pil.height)
+        canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
+        canvas.image = img_tk # Referansı tutmak için zorunlu
+
+# --- Arayüz (GUI) Oluşturma ---
+root = tk.Tk()
+root.title("Yüz Tanıma Uygulaması (Cevaplandı)")
+
+canvas = tk.Canvas(root, width=600, height=400, bg="lightgrey")
+canvas.pack(pady=10, padx=10)
+
+open_button = tk.Button(root, text="Dosya Seç ve Yüz Algıla", command=open_file)
+open_button.pack(pady=10)
+
+root.mainloop()
